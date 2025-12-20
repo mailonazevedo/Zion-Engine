@@ -5,12 +5,8 @@
 <?import javafx.scene.layout.VBox?>
 
 <?import javafx.scene.control.Button?>
-<VBox alignment="CENTER" spacing="20.0" xmlns:fx="http://javafx.com/fxml"
+<?import javafx.scene.layout.StackPane?>
+<VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.app.zionengine.HomeController">
-    <padding>
-        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
-    </padding>
-
-    <Label fx:id="welcomeText"/>
-    <Button text="Hello!" onAction="#onHelloButtonClick"/>
+    <StackPane fx:id="viewport3D" VBox.vgrow="ALWAYS" style="-fx-background-color: #1e1e1e;" />
 </VBox>
