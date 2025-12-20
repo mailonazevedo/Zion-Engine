@@ -26,17 +26,18 @@ class HomeController {
 
     private val teclas = mutableSetOf<KeyCode>()
 
-    // Movimento
+    // === VELOCIDADES ===
     private val velocidadeBase = 300.0
+    private val multiplicadorShift = 3.0
     private val velocidadeRotacao = 90.0
     private val velocidadeZoom = 800.0
 
-    // Estado da câmera
+    // === ESTADO DA CAMERA ===
     private var yaw = -45.0
     private var pitch = -35.0
     private var zoom = -900.0
 
-    // Limites de zoom
+    // === LIMITES ===
     private val zoomMin = -200.0
     private val zoomMax = -3000.0
 
@@ -50,6 +51,7 @@ class HomeController {
     }
 
     private fun criarSceneEditor(scene: Scene) {
+
         val root3D = Group()
 
         // === LUZ ===
@@ -94,11 +96,13 @@ class HomeController {
     // LOOP PRINCIPAL
     // =========================================================
     private fun iniciarLoop() {
+
         object : AnimationTimer() {
 
             private var ultimoTempo = 0L
 
             override fun handle(agora: Long) {
+
                 if (ultimoTempo == 0L) {
                     ultimoTempo = agora
                     return
@@ -115,17 +119,23 @@ class HomeController {
     }
 
     // =========================================================
-    // MOVIMENTO (WASD)
+    // MOVIMENTO (WASD + SHIFT)
     // =========================================================
     private fun atualizarMovimento(delta: Double) {
 
         var dx = 0.0
         var dz = 0.0
 
-        if (KeyCode.W in teclas) dz += velocidadeBase * delta
-        if (KeyCode.S in teclas) dz -= velocidadeBase * delta
-        if (KeyCode.A in teclas) dx -= velocidadeBase * delta
-        if (KeyCode.D in teclas) dx += velocidadeBase * delta
+        var velocidadeAtual = velocidadeBase
+
+        if (KeyCode.SHIFT in teclas) {
+            velocidadeAtual *= multiplicadorShift
+        }
+
+        if (KeyCode.W in teclas) dz += velocidadeAtual * delta
+        if (KeyCode.S in teclas) dz -= velocidadeAtual * delta
+        if (KeyCode.A in teclas) dx -= velocidadeAtual * delta
+        if (KeyCode.D in teclas) dx += velocidadeAtual * delta
 
         if (dx != 0.0 || dz != 0.0) {
             moverCamera(dx, dz)
@@ -148,8 +158,8 @@ class HomeController {
     // =========================================================
     private fun atualizarZoom(delta: Double) {
 
-        if (KeyCode.L in teclas) zoom -= velocidadeZoom * delta   // zoom out
-        if (KeyCode.O in teclas) zoom += velocidadeZoom * delta   // zoom in
+        if (KeyCode.L in teclas) zoom -= velocidadeZoom * delta
+        if (KeyCode.O in teclas) zoom += velocidadeZoom * delta
 
         zoom = zoom.coerceIn(zoomMax, zoomMin)
         camera.translateZ = zoom
