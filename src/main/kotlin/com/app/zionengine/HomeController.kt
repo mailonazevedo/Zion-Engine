@@ -2,6 +2,7 @@ package com.app.zionengine
 
 import javafx.fxml.FXML
 import javafx.scene.*
+import javafx.scene.image.WritableImage
 import javafx.scene.layout.StackPane
 import javafx.scene.paint.Color
 import javafx.scene.paint.PhongMaterial
@@ -24,16 +25,23 @@ class HomeController {
         }
     }
 
-    // =========================
-    // SCENE DE EDITOR (UNITY-LIKE)
-    // =========================
     private fun criarSceneEditor(scene: Scene) {
         val root3D = Group()
 
-        // Chão cinza
-        root3D.children.add(criarChao())
-        // Grid 3D (plano XZ)
-        root3D.children.add(criarGrid3D())
+        // === LUZ (essencial para não ficar opaco) ===
+        val ambientLight = AmbientLight(Color.rgb(130, 130, 130))
+
+        val directionalLight = DirectionalLight(Color.WHITE).apply {
+            transforms.add(
+                Rotate(-60.0, Rotate.X_AXIS)
+            )
+        }
+
+        root3D.children.addAll(
+            ambientLight,
+            directionalLight,
+            criarChao()
+        )
 
         val camera = criarCameraEditor()
 
@@ -55,72 +63,68 @@ class HomeController {
         viewport3D.children.setAll(subScene3D)
     }
 
-    // =========================
-    // GRID 3D (USANDO BOX COMO LINHA)
-    // =========================
-    private fun criarGrid3D(
-        tamanho: Int = 1000,
-        passo: Int = 50
-    ): Group {
+    // === TEXTURA DE GRID FINA ===
+    private fun criarTexturaGrid(
+        tamanho: Int = 1024,
+        passo: Int = 80
+    ): WritableImage {
 
-        val grid = Group()
+        val image = WritableImage(tamanho, tamanho)
+        val pw = image.pixelWriter
 
-        val gridMaterial = PhongMaterial(Color.rgb(70, 70, 70))
+        val corChao = Color.rgb(165, 165, 165)
+        val corLinha = Color.rgb(120, 120, 120)
 
-        for (i in -tamanho..tamanho step passo) {
+        for (x in 0 until tamanho) {
+            for (y in 0 until tamanho) {
 
-            // Linha paralela ao eixo X
-            val linhaX = Box(
-                tamanho * 2.0,
-                0.5,
-                0.5
-            ).apply {
-                translateZ = i.toDouble()
-                material = gridMaterial
+                val linhaFina =
+                    x % passo == 0 ||
+                            y % passo == 0
+
+                pw.setColor(
+                    x,
+                    y,
+                    if (linhaFina) corLinha else corChao
+                )
             }
-
-            // Linha paralela ao eixo Z
-            val linhaZ = Box(
-                0.5,
-                0.5,
-                tamanho * 2.0
-            ).apply {
-                translateX = i.toDouble()
-                material = gridMaterial
-            }
-
-            grid.children.addAll(linhaX, linhaZ)
         }
 
-        return grid
+        return image
     }
 
-    // =========================
-    // CÂMERA DE EDITOR (UNITY STYLE)
-    // =========================
     private fun criarCameraEditor(): PerspectiveCamera {
         return PerspectiveCamera(true).apply {
 
-            translateX = -400.0
-            translateY = -300.0
-            translateZ = -400.0
+            translateX = 200.0
+            translateY = -2000.0
+            translateZ = -700.0
 
             transforms.addAll(
-                Rotate(-35.0, Rotate.X_AXIS),
-                Rotate(-45.0, Rotate.Y_AXIS)
+                Rotate(-50.0, Rotate.X_AXIS),
+                Rotate(0.0, Rotate.Y_AXIS)
             )
 
             nearClip = 0.1
             farClip = 10_000.0
         }
     }
+
+    // === CHÃO COM GRID EMBUTIDO ===
     private fun criarChao(
         tamanho: Double = 2000.0
     ): Box {
 
+        val material = PhongMaterial().apply {
+            diffuseMap = criarTexturaGrid()
+            diffuseColor = Color.rgb(200, 200, 200)
+            specularColor = Color.rgb(180, 180, 180)
+            specularPower = 32.0
+        }
+
         return Box(tamanho, 1.0, tamanho).apply {
-            translateY = 0.5  // levemente abaixo do grid
-            material = PhongMaterial(Color.rgb(180, 180, 180))
+            translateY = 0.6
+            this.material = material
         }
     }
 }
