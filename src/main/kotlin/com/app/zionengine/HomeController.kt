@@ -20,8 +20,25 @@ class HomeController {
 
     // === CAMERA ===
     private lateinit var cameraPivot: Group
+    private lateinit var camera: PerspectiveCamera
+    private lateinit var rotateY: Rotate
+    private lateinit var rotateX: Rotate
+
     private val teclas = mutableSetOf<KeyCode>()
-    private val velocidadeBase = 300.0 // unidades por segundo
+
+    // Movimento
+    private val velocidadeBase = 300.0
+    private val velocidadeRotacao = 90.0
+    private val velocidadeZoom = 800.0
+
+    // Estado da câmera
+    private var yaw = -45.0
+    private var pitch = -35.0
+    private var zoom = -900.0
+
+    // Limites de zoom
+    private val zoomMin = -200.0
+    private val zoomMax = -3000.0
 
     @FXML
     fun initialize() {
@@ -37,7 +54,6 @@ class HomeController {
 
         // === LUZ ===
         val ambientLight = AmbientLight(Color.rgb(130, 130, 130))
-
         val directionalLight = DirectionalLight(Color.WHITE).apply {
             transforms.add(Rotate(-60.0, Rotate.X_AXIS))
         }
@@ -48,7 +64,7 @@ class HomeController {
             criarChao()
         )
 
-        val camera = criarCameraEditor()
+        camera = criarCameraEditor()
         root3D.children.add(cameraPivot)
 
         subScene3D = SubScene(
@@ -71,33 +87,36 @@ class HomeController {
         scene.setOnKeyPressed { teclas.add(it.code) }
         scene.setOnKeyReleased { teclas.remove(it.code) }
 
-        iniciarLoopMovimento()
+        iniciarLoop()
     }
 
     // =========================================================
-    // LOOP DE ATUALIZAÇÃO (MOVIMENTO FLUIDO)
+    // LOOP PRINCIPAL
     // =========================================================
-    private fun iniciarLoopMovimento() {
-
+    private fun iniciarLoop() {
         object : AnimationTimer() {
 
             private var ultimoTempo = 0L
 
             override fun handle(agora: Long) {
-
                 if (ultimoTempo == 0L) {
                     ultimoTempo = agora
                     return
                 }
 
-                val deltaTime = (agora - ultimoTempo) / 1_000_000_000.0
+                val delta = (agora - ultimoTempo) / 1_000_000_000.0
                 ultimoTempo = agora
 
-                atualizarMovimento(deltaTime)
+                atualizarMovimento(delta)
+                atualizarRotacao(delta)
+                atualizarZoom(delta)
             }
         }.start()
     }
 
+    // =========================================================
+    // MOVIMENTO (WASD)
+    // =========================================================
     private fun atualizarMovimento(delta: Double) {
 
         var dx = 0.0
@@ -114,16 +133,34 @@ class HomeController {
     }
 
     // =========================================================
-    // MOVIMENTO BASEADO NA ROTAÇÃO DA CÂMERA
+    // ROTAÇÃO (J / K)
+    // =========================================================
+    private fun atualizarRotacao(delta: Double) {
+
+        if (KeyCode.J in teclas) yaw -= velocidadeRotacao * delta
+        if (KeyCode.K in teclas) yaw += velocidadeRotacao * delta
+
+        rotateY.angle = yaw
+    }
+
+    // =========================================================
+    // ZOOM (L / O)
+    // =========================================================
+    private fun atualizarZoom(delta: Double) {
+
+        if (KeyCode.L in teclas) zoom -= velocidadeZoom * delta   // zoom out
+        if (KeyCode.O in teclas) zoom += velocidadeZoom * delta   // zoom in
+
+        zoom = zoom.coerceIn(zoomMax, zoomMin)
+        camera.translateZ = zoom
+    }
+
+    // =========================================================
+    // MOVIMENTO RELATIVO À ROTAÇÃO
     // =========================================================
     private fun moverCamera(dx: Double, dz: Double) {
 
-        val rotY = cameraPivot.transforms
-            .filterIsInstance<Rotate>()
-            .first { it.axis == Rotate.Y_AXIS }
-            .angle
-
-        val rad = Math.toRadians(-rotY)
+        val rad = Math.toRadians(-yaw)
 
         val sin = Math.sin(rad)
         val cos = Math.cos(rad)
@@ -139,28 +176,25 @@ class HomeController {
 
         cameraPivot = Group()
 
-        val camera = PerspectiveCamera(true).apply {
-            translateZ = -900.0
+        rotateX = Rotate(pitch, Rotate.X_AXIS)
+        rotateY = Rotate(yaw, Rotate.Y_AXIS)
+
+        cameraPivot.transforms.addAll(rotateX, rotateY)
+
+        camera = PerspectiveCamera(true).apply {
+            translateZ = zoom
             nearClip = 0.1
             farClip = 10_000.0
         }
 
-        cameraPivot.transforms.addAll(
-            Rotate(-35.0, Rotate.X_AXIS),
-            Rotate(-45.0, Rotate.Y_AXIS)
-        )
-
         cameraPivot.children.add(camera)
-
         return camera
     }
 
     // =========================================================
-    // CHÃO COM GRID EMBUTIDO
+    // CHÃO COM GRID
     // =========================================================
-    private fun criarChao(
-        tamanho: Double = 2000.0
-    ): Box {
+    private fun criarChao(tamanho: Double = 2000.0): Box {
 
         val material = PhongMaterial().apply {
             diffuseMap = criarTexturaGrid()
@@ -176,7 +210,7 @@ class HomeController {
     }
 
     // =========================================================
-    // TEXTURA DO GRID
+    // TEXTURA GRID
     // =========================================================
     private fun criarTexturaGrid(
         tamanho: Int = 1024,
@@ -191,15 +225,8 @@ class HomeController {
 
         for (x in 0 until tamanho) {
             for (y in 0 until tamanho) {
-
-                val linha =
-                    x % passo == 0 || y % passo == 0
-
-                pw.setColor(
-                    x,
-                    y,
-                    if (linha) corLinha else corChao
-                )
+                val linha = x % passo == 0 || y % passo == 0
+                pw.setColor(x, y, if (linha) corLinha else corChao)
             }
         }
 
