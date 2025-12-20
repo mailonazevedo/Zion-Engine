@@ -207,7 +207,7 @@ class HomeController {
     // =========================================================
     // CHÃO COM GRID
     // =========================================================
-    private fun criarChao(tamanho: Double = 2000.0): Box {
+    private fun criarChao(tamanho: Double = 2000.0, altura: Double = 10.0): Box {
 
         val material = PhongMaterial().apply {
             diffuseMap = criarTexturaGrid()
@@ -216,8 +216,8 @@ class HomeController {
             specularPower = 32.0
         }
 
-        return Box(tamanho, 1.0, tamanho).apply {
-            translateY = 0.6
+        return Box(tamanho, altura, tamanho).apply {
+            translateY = altura / 2.0  // centraliza o chão em relação ao eixo Y
             this.material = material
         }
     }
