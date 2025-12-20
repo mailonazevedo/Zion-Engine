@@ -38,15 +38,16 @@ class HomeController {
     private var zoom = -900.0
 
     // === LIMITES ===
+    private val pitchMin = -85.0
+    private val pitchMax = 0.0
+
     private val zoomMin = -200.0
     private val zoomMax = -3000.0
 
     @FXML
     fun initialize() {
         viewport3D.sceneProperty().addListener { _, _, scene ->
-            if (scene != null) {
-                criarSceneEditor(scene)
-            }
+            if (scene != null) criarSceneEditor(scene)
         }
     }
 
@@ -85,7 +86,6 @@ class HomeController {
 
         viewport3D.children.setAll(subScene3D)
 
-        // === INPUT ===
         scene.setOnKeyPressed { teclas.add(it.code) }
         scene.setOnKeyReleased { teclas.remove(it.code) }
 
@@ -96,7 +96,6 @@ class HomeController {
     // LOOP PRINCIPAL
     // =========================================================
     private fun iniciarLoop() {
-
         object : AnimationTimer() {
 
             private var ultimoTempo = 0L
@@ -127,7 +126,6 @@ class HomeController {
         var dz = 0.0
 
         var velocidadeAtual = velocidadeBase
-
         if (KeyCode.SHIFT in teclas) {
             velocidadeAtual *= multiplicadorShift
         }
@@ -137,20 +135,26 @@ class HomeController {
         if (KeyCode.A in teclas) dx -= velocidadeAtual * delta
         if (KeyCode.D in teclas) dx += velocidadeAtual * delta
 
-        if (dx != 0.0 || dz != 0.0) {
-            moverCamera(dx, dz)
-        }
+        if (dx != 0.0 || dz != 0.0) moverCamera(dx, dz)
     }
 
     // =========================================================
-    // ROTAÇÃO (J / K)
+    // ROTAÇÃO (YAW + PITCH COM LIMITE)
     // =========================================================
     private fun atualizarRotacao(delta: Double) {
 
+        // === YAW (J / K) ===
         if (KeyCode.J in teclas) yaw -= velocidadeRotacao * delta
         if (KeyCode.K in teclas) yaw += velocidadeRotacao * delta
 
+        // === PITCH (I / U) ===
+        if (KeyCode.I in teclas) pitch -= velocidadeRotacao * delta
+        if (KeyCode.U in teclas) pitch += velocidadeRotacao * delta
+
+        pitch = pitch.coerceIn(pitchMin, pitchMax)
+
         rotateY.angle = yaw
+        rotateX.angle = pitch
     }
 
     // =========================================================
@@ -166,12 +170,11 @@ class HomeController {
     }
 
     // =========================================================
-    // MOVIMENTO RELATIVO À ROTAÇÃO
+    // MOVIMENTO RELATIVO AO YAW
     // =========================================================
     private fun moverCamera(dx: Double, dz: Double) {
 
         val rad = Math.toRadians(-yaw)
-
         val sin = Math.sin(rad)
         val cos = Math.cos(rad)
 
