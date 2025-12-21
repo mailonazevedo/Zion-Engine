@@ -16,7 +16,7 @@ import javafx.scene.paint.PhongMaterial
 import javafx.scene.shape.Box
 import javafx.scene.transform.Rotate
 
-class Quadro3D {
+class Quadro3D : IQuadro3D {
 
     private lateinit var subScene3D: SubScene
 
@@ -47,7 +47,7 @@ class Quadro3D {
     private val zoomMax = -3000.0
 
 
-    fun criarSceneEditor(scene: Scene, viewport3D: StackPane) {
+    override fun criarSceneEditor(scene: Scene, viewport3D: StackPane) {
 
         val root3D = Group()
 
@@ -88,7 +88,7 @@ class Quadro3D {
         iniciarLoop()
     }
 
-    private fun iniciarLoop() {
+    override fun iniciarLoop() {
         object : AnimationTimer() {
 
             private var ultimoTempo = 0L
@@ -110,10 +110,7 @@ class Quadro3D {
         }.start()
     }
 
-    // =========================================================
-    // MOVIMENTO (WASD + SHIFT)
-    // =========================================================
-    private fun atualizarMovimento(delta: Double) {
+    override fun atualizarMovimento(delta: Double) {
 
         var dx = 0.0
         var dz = 0.0
@@ -131,10 +128,7 @@ class Quadro3D {
         if (dx != 0.0 || dz != 0.0) moverCamera(dx, dz)
     }
 
-    // =========================================================
-    // ROTAÇÃO (YAW + PITCH COM LIMITE)
-    // =========================================================
-    private fun atualizarRotacao(delta: Double) {
+    override fun atualizarRotacao(delta: Double) {
 
         // === YAW (J / K) ===
         if (KeyCode.J in teclas) yaw -= velocidadeRotacao * delta
@@ -153,7 +147,7 @@ class Quadro3D {
     // =========================================================
     // ZOOM (L / O)
     // =========================================================
-    private fun atualizarZoom(delta: Double) {
+    override fun atualizarZoom(delta: Double) {
 
         if (KeyCode.L in teclas) zoom -= velocidadeZoom * delta
         if (KeyCode.O in teclas) zoom += velocidadeZoom * delta
@@ -162,10 +156,7 @@ class Quadro3D {
         camera.translateZ = zoom
     }
 
-    // =========================================================
-    // MOVIMENTO RELATIVO AO YAW
-    // =========================================================
-    private fun moverCamera(dx: Double, dz: Double) {
+    override fun moverCamera(dx: Double, dz: Double) {
 
         val rad = Math.toRadians(-yaw)
         val sin = Math.sin(rad)
@@ -175,10 +166,8 @@ class Quadro3D {
         cameraPivot.translateZ += dx * sin + dz * cos
     }
 
-    // =========================================================
-    // CAMERA COM PIVOT
-    // =========================================================
-    private fun criarCameraEditor(): PerspectiveCamera {
+
+    override fun criarCameraEditor(): PerspectiveCamera {
 
         cameraPivot = Group()
 
@@ -200,7 +189,7 @@ class Quadro3D {
     // =========================================================
     // CHÃO COM GRID
     // =========================================================
-    private fun criarChao(tamanho: Double = 2000.0, altura: Double = 10.0): Box {
+    override fun criarChao(tamanho: Double, altura: Double): Box{
 
         val material = PhongMaterial().apply {
             diffuseMap = criarTexturaGrid()
@@ -218,9 +207,9 @@ class Quadro3D {
     // =========================================================
     // TEXTURA GRID
     // =========================================================
-    private fun criarTexturaGrid(
-        tamanho: Int = 1024,
-        passo: Int = 80
+    override fun criarTexturaGrid(
+        tamanho: Int,
+        passo: Int
     ): WritableImage {
 
         val image = WritableImage(tamanho, tamanho)
