@@ -17,6 +17,8 @@ import javafx.scene.paint.LinearGradient
 import javafx.scene.paint.PhongMaterial
 import javafx.scene.paint.Stop
 import javafx.scene.shape.Box
+import javafx.scene.shape.CullFace
+import javafx.scene.shape.DrawMode
 import javafx.scene.shape.Rectangle
 import javafx.scene.transform.Rotate
 
@@ -62,7 +64,6 @@ class Quadro3D : IQuadro3D {
         root3D.children.addAll(
             ambientLight,
             directionalLight,
-            criarFundoCeu(),
             criarChao()
         )
 
@@ -77,7 +78,7 @@ class Quadro3D : IQuadro3D {
             SceneAntialiasing.BALANCED
         )
 
-        subScene3D.fill = Color.BLACK
+        subScene3D.fill = Color.rgb(100, 140, 190) // azul Unity
         subScene3D.camera = camera
 
         subScene3D.widthProperty().bind(scene.widthProperty())
@@ -113,28 +114,6 @@ class Quadro3D : IQuadro3D {
         }.start()
     }
 
-    private fun criarFundoCeu(): Box {
-        val fundoGradiente = LinearGradient(
-            0.0, 0.0,
-            0.0, 1.0,
-            true,
-            CycleMethod.NO_CYCLE,
-            listOf(
-                Stop(0.0, Color.rgb(60, 90, 130)),   // topo (céu escuro)
-                Stop(0.5, Color.rgb(100, 140, 190)), // meio (azul Unity)
-                Stop(1.0, Color.rgb(150, 170, 200))  // base (horizonte claro)
-            )
-        )
-
-        val material = PhongMaterial().apply {
-            diffuseColor = Color.rgb(100, 140, 190) // azul Unity como fallback
-        }
-
-        return Box(20000.0, 20000.0, 1.0).apply {
-            this.material = material
-            translateZ = 5000.0  // bem longe atrás de tudo
-        }
-    }
     override fun atualizarMovimento(delta: Double) {
 
         var dx = 0.0
