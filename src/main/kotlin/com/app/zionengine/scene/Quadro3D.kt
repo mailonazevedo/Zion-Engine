@@ -196,10 +196,10 @@ class Quadro3D : IQuadro3D {
     override fun criarChao(tamanho: Double, altura: Double): Box{
 
         val material = PhongMaterial().apply {
-            diffuseMap = criarTexturaGrid()
-            diffuseColor = Color.rgb(200, 200, 200)
-            specularColor = Color.rgb(180, 180, 180)
-            specularPower = 32.0
+            diffuseMap = criarTexturaGrid(4096, 64) // textura ultra HD para máxima nitidez
+            diffuseColor = Color.rgb(200, 200, 200) // cinza claro
+            specularColor = Color.rgb(180, 180, 180) // reflexo sutil
+            specularPower = 16.0                     // reflexo mais difuso (mais realista)
         }
 
         return Box(tamanho, altura, tamanho).apply {
@@ -219,13 +219,30 @@ class Quadro3D : IQuadro3D {
         val image = WritableImage(tamanho, tamanho)
         val pw = image.pixelWriter
 
-        val corChao = Color.rgb(165, 165, 165)
-        val corLinha = Color.rgb(120, 120, 120)
+        // Cores estilo Unreal Engine - tons de cinza claro
+        val corChao = Color.rgb(180, 180, 180)        // cinza claro
+        val corLinhaFina = Color.rgb(150, 150, 150)   // linhas finas do grid
+        val corLinhaGrossa = Color.rgb(120, 120, 120) // linhas principais (a cada 10)
+        val corEixos = Color.rgb(90, 90, 90)          // linhas de eixo central
+
+        val centro = tamanho / 2
 
         for (x in 0 until tamanho) {
             for (y in 0 until tamanho) {
-                val linha = x % passo == 0 || y % passo == 0
-                pw.setColor(x, y, if (linha) corLinha else corChao)
+                // Linhas com 3 pixels de largura para máxima nitidez
+                val linhaFina = (x % passo in 0..2) || (y % passo in 0..2)
+                val linhaGrossa = (x % (passo * 10) in 0..4) || (y % (passo * 10) in 0..4)
+                val eixoCentral = (x in (centro - 2)..(centro + 2)) || (y in (centro - 2)..(centro + 2))
+
+                // Prioridade: eixo central > linha grossa > linha fina > chão
+                val cor = when {
+                    eixoCentral -> corEixos
+                    linhaGrossa -> corLinhaGrossa
+                    linhaFina -> corLinhaFina
+                    else -> corChao
+                }
+
+                pw.setColor(x, y, cor)
             }
         }
 
